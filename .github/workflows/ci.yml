@@ -1,31 +1,34 @@
 name: Continuous Integration
 
-on: push
+on:
+    push:
+        branches:
+            - main
 
 env:
     CARGO_TERM_COLOR: always
 
+permissions:
+    contents: read
+
 jobs:
     test:
         runs-on: ubuntu-latest
-        name: CI
         steps:
-            - uses: actions/checkout@v3
-            - name: Set up cargo cache
-              uses: actions/cache@v3
-              continue-on-error: false
-              with:
-                  path: |
-                      ~/.cargo/bin/
-                      ~/.cargo/registry/index/
-                      ~/.cargo/registry/cache/
-                      ~/.cargo/git/db/
-                      target/
-                  key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-                  restore-keys: ${{ runner.os }}-cargo-
-            - name: cargo test
-              run: cargo test
-            - name: cargo clippy
-              run: cargo clippy -- -D warnings
-            - name: cargo fmt
-              run: cargo fmt --check
+            - uses: actions/checkout@v4
+            - uses: dtolnay/rust-toolchain@nightly
+            - run: cargo test
+
+    fmt:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: dtolnay/rust-toolchain@nightly
+            - run: cargo fmt --all --check
+
+    clippy:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: dtolnay/rust-toolchain@nightly
+            - run: cargo clippy -- -D warnings
