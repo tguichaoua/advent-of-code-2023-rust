@@ -1,5 +1,7 @@
-use crate::Day;
+use std::path::PathBuf;
 use std::{env, fs};
+
+use crate::Day;
 
 pub mod aoc_cli;
 pub mod commands;
@@ -9,6 +11,13 @@ pub mod runner;
 pub const ANSI_ITALIC: &str = "\x1b[3m";
 pub const ANSI_BOLD: &str = "\x1b[1m";
 pub const ANSI_RESET: &str = "\x1b[0m";
+
+/// The path to the data folder.
+#[must_use]
+pub fn data_path() -> PathBuf {
+    let cwd = env::current_dir().unwrap();
+    cwd.join("data")
+}
 
 /// Helper function that reads a text file to a string.
 #[must_use]
