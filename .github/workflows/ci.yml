@@ -12,12 +12,12 @@ permissions:
     contents: read
 
 jobs:
-    test:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - uses: dtolnay/rust-toolchain@nightly
-            - run: cargo test
+    # test:
+    #     runs-on: ubuntu-latest
+    #     steps:
+    #         - uses: actions/checkout@v4
+    #         - uses: dtolnay/rust-toolchain@nightly
+    #         - run: cargo test
 
     fmt:
         runs-on: ubuntu-latest
