@@ -55,11 +55,12 @@ pub fn part_one(input: &str) -> Option<u32> {
     let games = parse_input(input);
 
     let result = games
-        .iter()
+        .into_iter()
         .filter(|game| {
             game.draw
                 .iter()
-                .all(|&Draw { red, green, blue }| red <= 12 && green <= 13 && blue <= 14)
+                .copied()
+                .all(|Draw { red, green, blue }| red <= 12 && green <= 13 && blue <= 14)
         })
         .map(|game| game.id)
         .sum();
@@ -73,12 +74,11 @@ pub fn part_two(input: &str) -> Option<u32> {
     let games = parse_input(input);
 
     let result = games
-        .iter()
+        .into_iter()
         .map(|game| {
             let minimum_colors = game
                 .draw
-                .iter()
-                .copied()
+                .into_iter()
                 .reduce(|acc, e| Draw {
                     red: acc.red.max(e.red),
                     green: acc.green.max(e.green),
