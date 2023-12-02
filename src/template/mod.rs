@@ -12,18 +12,23 @@ pub const ANSI_ITALIC: &str = "\x1b[3m";
 pub const ANSI_BOLD: &str = "\x1b[1m";
 pub const ANSI_RESET: &str = "\x1b[0m";
 
-/// The path to the data folder.
-#[must_use]
-pub fn data_path() -> PathBuf {
-    let cwd = env::current_dir().unwrap();
-    cwd.join("data")
-}
-
 /// Helper function that reads a text file to a string.
 #[must_use]
 pub fn read_file(folder: &str, day: Day) -> String {
     let cwd = env::current_dir().unwrap();
     let filepath = cwd.join("data").join(folder).join(format!("{day}.txt"));
+    let f = fs::read_to_string(filepath);
+    f.expect("could not open input file")
+}
+
+/// Helper function that reads a text file to string, appending a part suffix. E.g. like `01-2.txt`.
+#[must_use]
+pub fn read_file_part(folder: &str, day: Day, part: u8) -> String {
+    let cwd = env::current_dir().unwrap();
+    let filepath = cwd
+        .join("data")
+        .join(folder)
+        .join(format!("{day}-{part}.txt"));
     let f = fs::read_to_string(filepath);
     f.expect("could not open input file")
 }

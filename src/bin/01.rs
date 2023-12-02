@@ -194,26 +194,21 @@ pub fn part_two(input: &str) -> Option<u32> {
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
-
     use super::*;
 
     #[test]
     fn test_part_one() {
-        let result = part_one(&advent_of_code::template::read_file("examples", DAY));
+        let result = part_one(&advent_of_code::template::read_file_part(
+            "examples", DAY, 1,
+        ));
         assert_eq!(result, Some(142));
     }
 
     #[test]
     fn test_part_two() {
-        let input = fs::read_to_string(
-            advent_of_code::template::data_path()
-                .join("examples")
-                .join("01-2.txt"),
-        )
-        .expect("could not read the file");
-
-        let result = part_two(&input);
+        let result = part_two(&advent_of_code::template::read_file_part(
+            "examples", DAY, 2,
+        ));
         assert_eq!(result, Some(281));
     }
 }
