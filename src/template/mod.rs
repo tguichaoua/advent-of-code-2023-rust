@@ -1,4 +1,3 @@
-use std::path::PathBuf;
 use std::{env, fs};
 
 use crate::Day;
