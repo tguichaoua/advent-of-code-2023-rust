@@ -12,12 +12,19 @@ jobs:
         permissions:
             contents: write
         steps:
-            - uses: actions/checkout@v4
-            - uses: k2bd/advent-readme-stars@v1
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Update ⭐️ Star Table
+              uses: k2bd/advent-readme-stars@v1
               with:
                   userId: ${{ secrets.AOC_USER_ID }}
                   sessionCookie: ${{ secrets.AOC_SESSION }}
                   year: ${{ secrets.AOC_YEAR }}
+
+            - name: Update ⏱️ Benchmarking Table
+              run: cargo time
+
             - uses: stefanzweifel/git-auto-commit-action@v5
               with:
                   commit_message: "⭐️ update readme progress"
