@@ -4,97 +4,96 @@ advent_of_code::solution!(5);
 
 /* -------------------------------------------------------------------------- */
 
-#[derive(Clone, Copy)]
+type Range = std::ops::Range<u64>;
+
 struct MapRange {
     dst_start: u64,
-    src_start: u64,
-    len: u64,
+    source_range: Range,
 }
 
 impl MapRange {
-    fn src_contains(&self, value: u64) -> bool {
-        value >= self.src_start && value < self.src_start + self.len
+    fn map(&self, value: u64) -> u64 {
+        value - self.source_range.start + self.dst_start
+    }
+
+    fn map_range(&self, range: Range) -> Range {
+        self.map(range.start)..self.map(range.end)
     }
 }
 
 struct ResourceMap {
+    // INVARIANT: ranges are sorted by `source_range.start`
     ranges: Vec<MapRange>,
 }
 
-#[derive(Clone, Copy)]
-struct Range {
-    start: u64,
-    len: u64,
-}
-
-impl Range {
-    fn contains(&self, value: u64) -> bool {
-        value >= self.start && value < self.start + self.len
-    }
-}
-
 impl ResourceMap {
+    fn new(mut ranges: Vec<MapRange>) -> Self {
+        ranges.sort_by_key(|range| range.source_range.start);
+        Self { ranges }
+    }
+
     fn map(&self, value: u64) -> u64 {
-        for range in self.ranges.iter().copied() {
-            if range.src_contains(value) {
-                return value - range.src_start + range.dst_start;
+        for map in self.ranges.iter() {
+            if map.source_range.contains(&value) {
+                return map.map(value);
             }
         }
         value
     }
 
     fn map_range(&self, mut range: Range) -> Vec<Range> {
-        // Okay, this function looks horrible and should probably be refactored,
-        // but look bellow how the rest of code look elegant thanks to this function :)
+        // Okay, this function looks horrible but look how the rest
+        // of code look elegant thanks to this function :)
 
         let mut ranges = Vec::new();
 
-        for map_range in self.ranges.iter().copied() {
-            if map_range.src_contains(range.start) {
-                let start = range.start - map_range.src_start + map_range.dst_start;
-                let map_range_rest_len = map_range.len - (range.start - map_range.src_start);
-
-                if range.len <= map_range_rest_len {
-                    let len = range.len;
-                    ranges.push(Range { start, len });
+        for map_range @ MapRange {
+            dst_start: _,
+            source_range: map,
+        } in self.ranges.iter()
+        {
+            if range.start < map.start {
+                // `range` start is before `map`.
+                if range.end <= map.start {
+                    // `range` is *completely* before `map`, also `map`s are sorted so we'll never match another range.
+                    ranges.push(range);
                     return ranges;
                 } else {
-                    let len = map_range_rest_len;
-                    ranges.push(Range { start, len });
+                    // `range` first part is before `map`
+                    ranges.push(range.start..map.start);
 
-                    range.start += len;
-                    range.len -= len;
+                    if range.end <= map.end {
+                        // the second part of `range` is *completely* inside `map`
+                        ranges.push(map_range.map_range(map.start..range.end));
+
+                        return ranges;
+                    } else {
+                        // The second part of `range` covers `map`,
+                        ranges.push(map_range.map_range(map.start..map.end));
+
+                        // and there is a third part.
+                        range.start = map.end;
+
+                        // Let's map the third part.
+                        continue;
+                    }
                 }
-            } else if range.contains(map_range.src_start) {
-                let first = Range {
-                    start: range.start,
-                    len: map_range.src_start - range.start,
-                };
+            } else if range.start >= map.end {
+                // `range` is totally after `map`, let's check for another map range.
+                continue;
+            } else if range.end <= map.end {
+                // `range` is totally included inside `map` range.
+                ranges.push(map_range.map_range(range));
 
-                let source_range_rest_len = range.len - first.len;
+                return ranges;
+            } else {
+                // The first part of `range` is *completely* inside `map`.
+                ranges.push(map_range.map_range(range.start..map.end));
 
-                if source_range_rest_len <= map_range.len {
-                    let middle = Range {
-                        start: map_range.dst_start,
-                        len: source_range_rest_len,
-                    };
+                // Let's map the second part.
+                range.start = map.end;
 
-                    ranges.push(first);
-                    ranges.push(middle);
-
-                    return ranges;
-                } else {
-                    let middle = Range {
-                        start: map_range.dst_start,
-                        len: map_range.len,
-                    };
-
-                    ranges.push(first);
-                    ranges.push(middle);
-
-                    range.start += first.len + map_range.len;
-                    range.len -= first.len + map_range.len;
-                }
+                continue;
             }
         }
 
@@ -130,23 +129,25 @@ fn parse_input(input: &str) -> (impl Iterator<Item = u64> + '_, Maps) {
         (
             $( $name:ident => $header:expr; )*
         ) => {
-            $(
-                let header = lines.next();
-                debug_assert_eq!(header, Some($header));
-                let $name = {
-                    let mut ranges = lines
-                        .by_ref()
-                        .take_while(|line| !line.is_empty())
-                        .map(parse_map_range)
-                        .collect::<Vec<_>>();
-                    ranges.sort_by_key(|range| range.src_start);
-                    ResourceMap { ranges }
-                };
-            )*
+            Maps {
+                $(
+                    $name: {
+                        let header = lines.next();
+                        debug_assert_eq!(header, Some($header));
+                        let ranges = lines
+                            .by_ref()
+                            .take_while(|line| !line.is_empty())
+                            .map(parse_map_range)
+                            .collect();
+                        ResourceMap::new(ranges)
+                    },
+                )*
+            }
+
         };
     }
 
-    parse_resource_map! {
+    let maps = parse_resource_map! {
         seed_to_soil            => "seed-to-soil map:";
         soil_to_fertilizer      => "soil-to-fertilizer map:";
         fertilizer_to_water     => "fertilizer-to-water map:";
@@ -156,32 +157,22 @@ fn parse_input(input: &str) -> (impl Iterator<Item = u64> + '_, Maps) {
         humidity_to_location    => "humidity-to-location map:";
     };
 
-    (
-        seeds,
-        Maps {
-            seed_to_soil,
-            soil_to_fertilizer,
-            fertilizer_to_water,
-            water_to_light,
-            light_to_temperature,
-            temperature_to_humidity,
-            humidity_to_location,
-        },
-    )
+    (seeds, maps)
 }
 
 fn parse_map_range(str: &str) -> MapRange {
-    let (a, b) = str.split_once(' ').unwrap();
-    let (b, c) = b.split_once(' ').unwrap();
+    let (a, rest) = str.split_once(' ').unwrap();
+    let (b, c) = rest.split_once(' ').unwrap();
 
     let dst_start = a.parse().unwrap();
     let src_start = b.parse().unwrap();
-    let len = c.parse().unwrap();
+    let len: u64 = c.parse().unwrap();
+
+    let source_range = src_start..(src_start + len);
 
     MapRange {
         dst_start,
-        src_start,
-        len,
+        source_range,
     }
 }
 
@@ -231,7 +222,7 @@ pub fn part_one(input: &str) -> Option<u64> {
 pub fn part_two(input: &str) -> Option<u64> {
     let (seeds, maps) = parse_input(input);
 
-    let seeds = seeds.tuples().map(|(start, len)| Range { start, len });
+    let seeds = seeds.tuples().map(|(start, len)| start..(start + len));
 
     let locations = seeds
         .flat_map(|seeds| maps.seed_to_soil.map_range(seeds))
