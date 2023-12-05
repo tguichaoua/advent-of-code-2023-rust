@@ -44,7 +44,8 @@ impl ResourceMap {
     }
 
     fn map_range(&self, mut range: Range) -> Vec<Range> {
-        // THIS FUNCTION IS A NIGHTMARE !!!!!!
+        // Okay this function look horrible and should probably be refactored,
+        // but look bellow how the rest of code look elegant thanks to this function :)
 
         let mut ranges = Vec::new();
 
@@ -146,7 +147,7 @@ fn parse_input(input: &str) -> (impl Iterator<Item = u64> + '_, Maps) {
     }
 
     parse_resource_map! {
-        seed_to_soil            =>  "seed-to-soil map:";
+        seed_to_soil            => "seed-to-soil map:";
         soil_to_fertilizer      => "soil-to-fertilizer map:";
         fertilizer_to_water     => "fertilizer-to-water map:";
         water_to_light          => "water-to-light map:";
