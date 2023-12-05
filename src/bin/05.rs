@@ -44,7 +44,7 @@ impl ResourceMap {
     }
 
     fn map_range(&self, mut range: Range) -> Vec<Range> {
-        // Okay this function look horrible and should probably be refactored,
+        // Okay, this function looks horrible and should probably be refactored,
         // but look bellow how the rest of code look elegant thanks to this function :)
 
         let mut ranges = Vec::new();
