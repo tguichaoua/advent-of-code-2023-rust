@@ -35,7 +35,7 @@ fn calculate_nb_solution_for_race(time: u64, distance: u64) -> u64 {
     //       = T² - 4.(-1).(-D)
     //       = T² - 4.D
     let Some(delta) = (time * time).checked_sub(4 * distance) else {
-        // no real solution
+        // `delta` is negative, there is no real solution
         return 0;
     };
 
