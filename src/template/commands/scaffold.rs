@@ -4,7 +4,7 @@ use std::{
     process,
 };
 
-use crate::Day;
+use crate::template::Day;
 
 const MODULE_TEMPLATE: &str =
     include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/template.txt"));

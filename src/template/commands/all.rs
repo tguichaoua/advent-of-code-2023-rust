@@ -1,10 +1,10 @@
 use std::io;
 
 use crate::template::{
+    day::{all_days, Day},
     readme_benchmarks::{self, Timings},
     ANSI_BOLD, ANSI_ITALIC, ANSI_RESET,
 };
-use crate::{all_days, Day};
 
 pub fn handle(is_release: bool, is_timed: bool) {
     let mut timings: Vec<Timings> = vec![];
@@ -64,8 +64,7 @@ pub fn get_path_for_bin(day: Day) -> String {
 /// All solutions live in isolated binaries.
 /// This module encapsulates interaction with these binaries, both invoking them as well as parsing the timing output.
 mod child_commands {
-    use super::{get_path_for_bin, Error};
-    use crate::Day;
+    use super::{get_path_for_bin, Day, Error};
     use std::{
         io::{BufRead, BufReader},
         path::Path,
