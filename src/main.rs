@@ -28,6 +28,7 @@ mod args {
         },
         Time {
             all: bool,
+            no_readme: bool,
             day: Option<Day>,
         },
     }
@@ -42,9 +43,11 @@ mod args {
             },
             Some("time") => {
                 let all = args.contains("--all");
+                let no_readme = args.contains("--no-readme");
 
                 AppArguments::Time {
                     all,
+                    no_readme,
                     day: args.opt_free_from_str()?,
                 }
             }
@@ -90,7 +93,11 @@ fn main() {
         }
         Ok(args) => match args {
             AppArguments::All { release, time } => all::handle(release, time),
-            AppArguments::Time { day, all } => time::handle(day, all),
+            AppArguments::Time {
+                day,
+                all,
+                no_readme,
+            } => time::handle(day, all, !no_readme),
             AppArguments::Download { day } => download::handle(day),
             AppArguments::Read { day } => read::handle(day),
             AppArguments::Scaffold { day } => scaffold::handle(day),
