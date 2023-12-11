@@ -5,6 +5,8 @@ advent_of_code::solution!(6);
 /* -------------------------------------------------------------------------- */
 
 fn calculate_nb_solution_for_race(time: u64, distance: u64) -> u64 {
+    #![allow(clippy::cast_possible_truncation)]
+
     // Let `d` the distance the boat travel
     // Let `D` the distance to beat
     // Let `t` the time spent to press the button
@@ -56,12 +58,22 @@ fn calculate_nb_solution_for_race(time: u64, distance: u64) -> u64 {
     } else {
         // We want the integer greater than t_1 but not t_1 itself (if it's an integer),
         // because the inequality above is strict.
-        (t_1 + 1.0).floor() as u64
+
+        // t_1 is not negative
+        #[allow(clippy::cast_sign_loss)]
+        {
+            (t_1 + 1.0).floor() as u64
+        }
     };
 
     let t_2 = {
         // Same as of t_1, we want the integer lower than t_2 but not t_2 itself.
-        (t_2 - 1.0).ceil() as u64
+
+        // t_2 cannot be negative
+        #[allow(clippy::cast_sign_loss)]
+        {
+            (t_2 - 1.0).ceil() as u64
+        }
     };
 
     // The number of solution is the number of integer value between t_1 and t_2.

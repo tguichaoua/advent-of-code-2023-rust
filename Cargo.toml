@@ -19,3 +19,10 @@ itertools = "0.12.0"
 num = "0.4.1"
 pico-args = "0.5.0"
 regex = "1.10.2"
+
+[lints.clippy]
+unnecessary_cast = "deny"
+cast_lossless = "deny"
+cast_possible_truncation = "deny"
+cast_possible_wrap = "deny"
+cast_sign_loss = "deny"

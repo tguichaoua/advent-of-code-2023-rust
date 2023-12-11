@@ -127,10 +127,10 @@ pub fn part_one(input: &str) -> Option<Int> {
         .into_iter()
         .rev()
         .enumerate()
-        .map(|(i, (_, bid))| (i as Int + 1) * bid)
-        .sum();
+        .map(|(i, (_, bid))| (i + 1) * bid as usize)
+        .sum::<usize>();
 
-    Some(result)
+    Some(Int::try_from(result).unwrap())
 }
 
 /* -------------------------------------------------------------------------- */
@@ -218,10 +218,10 @@ pub fn part_two(input: &str) -> Option<Int> {
         .into_iter()
         .rev()
         .enumerate()
-        .map(|(i, (_, _, bid))| (i as Int + 1) * bid)
-        .sum();
+        .map(|(i, (_, _, bid))| (i + 1) * bid as usize)
+        .sum::<usize>();
 
-    Some(result)
+    Some(Int::try_from(result).unwrap())
 }
 
 /* -------------------------------------------------------------------------- */

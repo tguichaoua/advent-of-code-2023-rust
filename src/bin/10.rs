@@ -485,7 +485,7 @@ pub fn part_two(input: &str) -> Option<Int> {
         }
     }
 
-    Some(inside.len() as Int)
+    Some(Int::try_from(inside.len()).unwrap())
 }
 
 /* -------------------------------------------------------------------------- */

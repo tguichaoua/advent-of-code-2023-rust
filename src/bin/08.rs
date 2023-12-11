@@ -94,7 +94,7 @@ pub fn part_two(input: &str) -> Option<u64> {
 
     let result = start_locations
         .map(|mut location| {
-            let mut step = 0;
+            let mut step = 0u64;
             let mut instructions = instructions.clone().into_iter().cycle();
 
             loop {
@@ -112,7 +112,6 @@ pub fn part_two(input: &str) -> Option<u64> {
                 }
             }
         })
-        .map(|x| x as u64)
         .reduce(num::integer::lcm)
         .unwrap();
 
