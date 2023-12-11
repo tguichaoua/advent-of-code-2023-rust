@@ -1,10 +1,10 @@
-use advent_of_code::template::commands::{all, download, read, scaffold, solve};
+use advent_of_code::template::commands::{all, download, read, scaffold, solve, time};
 use args::{parse, AppArguments};
 
 mod args {
     use std::process;
 
-    use advent_of_code::template::day::Day;
+    use advent_of_code::template::Day;
 
     pub enum AppArguments {
         Download {
@@ -26,6 +26,10 @@ mod args {
             release: bool,
             time: bool,
         },
+        Time {
+            all: bool,
+            day: Option<Day>,
+        },
     }
 
     pub fn parse() -> Result<AppArguments, Box<dyn std::error::Error>> {
@@ -36,6 +40,14 @@ mod args {
                 release: args.contains("--release"),
                 time: args.contains("--time"),
             },
+            Some("time") => {
+                let all = args.contains("--all");
+
+                AppArguments::Time {
+                    all,
+                    day: args.opt_free_from_str()?,
+                }
+            }
             Some("download") => AppArguments::Download {
                 day: args.free_from_str()?,
             },
@@ -78,6 +90,7 @@ fn main() {
         }
         Ok(args) => match args {
             AppArguments::All { release, time } => all::handle(release, time),
+            AppArguments::Time { day, all } => time::handle(day, all),
             AppArguments::Download { day } => download::handle(day),
             AppArguments::Read { day } => read::handle(day),
             AppArguments::Scaffold { day } => scaffold::handle(day),

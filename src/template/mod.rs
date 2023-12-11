@@ -2,11 +2,14 @@ use std::{env, fs};
 
 pub mod aoc_cli;
 pub mod commands;
-pub mod day;
-pub mod readme_benchmarks;
 pub mod runner;
 
-use day::Day;
+pub use day::*;
+
+mod day;
+mod readme_benchmarks;
+mod run_multi;
+mod timings;
 
 pub const ANSI_ITALIC: &str = "\x1b[3m";
 pub const ANSI_BOLD: &str = "\x1b[1m";
@@ -50,7 +53,7 @@ macro_rules! solution {
 
     (@impl $day:expr, $( [$func:expr, $part:expr] )*) => {
         /// The current day.
-        const DAY: $crate::template::day::Day = $crate::day!($day);
+        const DAY: $crate::template::Day = $crate::day!($day);
 
         #[cfg(feature = "dhat-heap")]
         #[global_allocator]

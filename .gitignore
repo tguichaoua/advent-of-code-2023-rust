@@ -19,3 +19,7 @@ target/
 
 data/inputs
 data/puzzles
+
+# Benchmarks
+
+data/timings.json
