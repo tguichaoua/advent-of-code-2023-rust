@@ -85,7 +85,7 @@ pub fn part_one(input: &str) -> Option<Int> {
 
 /* -------------------------------------------------------------------------- */
 
-pub fn part_two(input: &str) -> Option<Int> {
+pub fn part_two(_input: &str) -> Option<Int> {
     None
 }
 
