@@ -72,6 +72,12 @@ impl Timings {
             .iter()
             .any(|t| &t.day == day && t.part_1.is_some() && t.part_2.is_some())
     }
+
+    pub fn is_day_partially_complete(&self, day: &Day) -> bool {
+        self.data
+            .iter()
+            .any(|t| &t.day == day && (t.part_1.is_some() || t.part_2.is_some()))
+    }
 }
 
 /* -------------------------------------------------------------------------- */

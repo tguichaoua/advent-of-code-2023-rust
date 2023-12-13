@@ -13,7 +13,7 @@ pub fn handle(day: Option<Day>, recreate_all: bool, update_readme: bool) {
         } else {
             // when the `--all` flag is not set, filter out days that are fully benched.
             all_days()
-                .filter(|day| !stored_timings.is_day_complete(day))
+                .filter(|day| !stored_timings.is_day_partially_complete(day))
                 .collect()
         }
     });
