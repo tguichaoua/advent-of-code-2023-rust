@@ -1,97 +1,7 @@
-use std::mem;
-
 /* -------------------------------------------------------------------------- */
 
-/// # Usage
-/// ```
-/// # fn initial_state(): () {}
-/// # fn do_cycle(state: &mut ()) {}
+/// Represents a succession of values including a loop.
 ///
-/// const CYCLE_COUNT: usize = 1_000_000_000;
-///
-/// let mut cycle_detector = CycleDetector::new();
-///
-/// let mut state = initial_state();
-/// cycle_detector.insert(state.clone());
-///
-/// for _ in 0..CYCLE_COUNT {
-///     do_cycle(&mut state);
-///     if cycle_detector.insert(state.clone()) {
-///         let the_loop = cycle_detector.into_loop().ok().unwrap();
-///         *state = the_loop.get(CYCLE_COUNT).clone();
-///         break;
-///     }
-/// }
-/// ```
-pub struct LoopDetector<T>(Detection<T>);
-
-enum Detection<T> {
-    Loop(Loop<T>),
-    NoLoop { states: Vec<T> },
-}
-
-impl<T> Default for Detection<T> {
-    fn default() -> Self {
-        Detection::NoLoop { states: Vec::new() }
-    }
-}
-
-impl<T> Default for LoopDetector<T> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<T> LoopDetector<T> {
-    pub fn new() -> Self {
-        Self(Detection::NoLoop { states: Vec::new() })
-    }
-}
-
-impl<T> LoopDetector<T>
-where
-    T: Eq,
-{
-    pub fn insert(&mut self, state: T) -> bool {
-        self.0 = match mem::take(&mut self.0) {
-            // TODO: use Result
-            Detection::Loop(_) => panic!("loop already found !"),
-            Detection::NoLoop { mut states } => {
-                let loop_start = states
-                    .iter()
-                    .enumerate()
-                    .find_map(|(i, x)| (x == &state).then_some(i));
-
-                if let Some(loop_start) = loop_start {
-                    // The state already exists
-                    let the_loop = Loop {
-                        values: states.into_boxed_slice(),
-                        loop_start,
-                    };
-
-                    Detection::Loop(the_loop)
-                } else {
-                    // The new state has been added
-                    states.push(state);
-
-                    Detection::NoLoop { states }
-                }
-            }
-        };
-
-        matches!(self.0, Detection::Loop(_))
-    }
-
-    pub fn into_loop(self) -> Result<Loop<T>, Self> {
-        match self.0 {
-            Detection::Loop(the_loop) => Ok(the_loop),
-            Detection::NoLoop { .. } => Err(self),
-        }
-    }
-}
-
-/* -------------------------------------------------------------------------- */
-
 /// ```txt
 ///                  LEN
 ///   <─────────────────────────────────>
@@ -100,10 +10,14 @@ where
 ///   [0] ──> [1] ──> [2] ──> [3] ──> [4]
 ///                    ^               │
 ///                    └───────────────┘
+///                    │
 ///                    └ LOOP START
 /// ```
+// NOTE: `Loop` didn't implement `Default` because an empty loop will violate the invariant on `loop_start`.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Loop<T> {
     values: Box<[T]>,
+    // INVARIANT: `loop_start` < `values.len`
     loop_start: usize,
 }
 
@@ -138,7 +52,27 @@ impl<T> Loop<T> {
         &self.values[self.loop_start..]
     }
 
-    /// Returns the elements at the index `i` from this loop as an infinite slice.
+    /// Converts the index to match an element of this loop.
+    ///
+    /// ```txt
+    ///   input:  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, ...]
+    ///            V  V  V  V  V  V  V  V  V  V   V
+    ///   output: [0, 1, 2, 3, 4, 2, 3, 4, 2, 3,  4, ...]
+    ///
+    ///   [0] ──> [1] ──> [2] ──> [3] ──> [4]
+    ///                    ^               │
+    ///                    └───────────────┘
+    /// ```
+    fn convert_index(&self, i: usize) -> usize {
+        if let Some(i) = i.checked_sub(self.loop_start) {
+            let i = i % self.loop_len();
+            i + self.loop_start
+        } else {
+            i
+        }
+    }
+
+    /// Returns a reference to the elements at the index `i` from this loop as an infinite slice.
     ///
     /// ```txt
     ///   [0, 1, 2, 3, 4, 2, 3, 4, 2, 3, 4, ...]
@@ -149,36 +83,81 @@ impl<T> Loop<T> {
     /// ```
     #[inline]
     pub fn get(&self, i: usize) -> &T {
-        if let Some(i) = i.checked_sub(self.loop_start) {
-            let i = i % self.loop_len();
-            let i = i + self.loop_start;
-            &self.values[i]
-        } else {
-            &self.values[i]
-        }
+        &self.values[self.convert_index(i)]
+    }
+
+    /// Returns the elements at the index `i` from this loop as an infinite slice.
+    ///
+    /// ```txt
+    ///   [0, 1, 2, 3, 4, 2, 3, 4, 2, 3, 4, ...]
+    ///
+    ///   [0] ──> [1] ──> [2] ──> [3] ──> [4]
+    ///                    ^               │
+    ///                    └───────────────┘
+    /// ```
+    #[inline]
+    pub fn get_into(self, i: usize) -> T {
+        let i = self.convert_index(i);
+        let mut v = self.values.into_vec();
+        v.swap_remove(i)
     }
 }
 
 /* -------------------------------------------------------------------------- */
 
-#[cfg(test)]
-mod tests {
-    use super::LoopDetector;
+/// Computes all values of `init_state` after repeatedly applying `compute_next_state`
+/// for `cycle_count` times.
+///
+/// If a loop is detected returns `Ok(loop)` otherwise returns a `Vec` with all computed values.
+///
+/// `compute_next_state` must be pure, i.e. the returned value depends only of the input value,
+/// otherwise this function may returns false positive.
+pub fn detect_loop<T>(
+    cycle_count: usize,
+    init_state: T,
+    mut compute_next_state: impl FnMut(&T) -> T,
+) -> Result<Loop<T>, Vec<T>>
+where
+    T: Eq,
+{
+    let mut states = vec![init_state];
 
-    #[test]
-    fn loop_detector() {
-        let mut loop_detector = LoopDetector::new();
+    for _ in 0..cycle_count {
+        // SAFETY: `states` contains at least 1 element.
+        let current_state = unsafe { states.last().unwrap_unchecked() };
+        let next_state = compute_next_state(current_state);
 
-        assert!(!loop_detector.insert(0));
-        assert!(!loop_detector.insert(1));
-        assert!(!loop_detector.insert(2));
-        assert!(!loop_detector.insert(3));
-        assert!(!loop_detector.insert(4));
-        assert!(loop_detector.insert(2));
+        let loop_start = states
+            .iter()
+            .enumerate()
+            .find_map(|(i, x)| (x == &next_state).then_some(i));
 
-        let the_loop = loop_detector.into_loop().ok().unwrap();
-        assert_eq!(the_loop.values(), &[0, 1, 2, 3, 4]);
-        assert_eq!(the_loop.loop_start(), 2);
+        if let Some(loop_start) = loop_start {
+            return Ok(Loop {
+                values: states.into_boxed_slice(),
+                loop_start,
+            });
+        } else {
+            states.push(next_state);
+        }
+    }
+
+    Err(states)
+}
+
+/// Computes the value of `init_state` after repeatedly applying `compute_next_state`
+/// for `cycle_count` times, using a loop detection strategy.
+pub fn compute_last_state<T>(
+    cycle_count: usize,
+    init_state: T,
+    compute_next_state: impl FnMut(&T) -> T,
+) -> T
+where
+    T: Eq,
+{
+    match detect_loop(cycle_count, init_state, compute_next_state) {
+        Ok(the_loop) => the_loop.get_into(cycle_count),
+        Err(mut states) => states.pop().unwrap(),
     }
 }
 

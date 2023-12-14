@@ -1,4 +1,4 @@
-use advent_of_code::helper::{array_2d::Array2D, loop_detector::LoopDetector};
+use advent_of_code::helper::{array_2d::Array2D, loop_detector};
 
 advent_of_code::solution!(14);
 
@@ -131,37 +131,27 @@ pub fn part_two(input: &str) -> Option<Int> {
             .map(|line: &str| line.bytes().map(|b| b == b'#')),
     );
 
-    let mut round_rocks = Array2D::from_iter(
+    let round_rocks = Array2D::from_iter(
         input
             .lines()
             .map(|line: &str| line.bytes().map(|b| b == b'O')),
     );
 
-    let mut loop_detector = LoopDetector::new();
+    let round_rocks =
+        loop_detector::compute_last_state(1_000_000_000, round_rocks, |round_rocks| {
+            let mut round_rocks = round_rocks.clone();
+            do_cycle(&square_rocks, &mut round_rocks);
+            round_rocks
+        });
 
-    loop_detector.insert(round_rocks.clone());
+    let height = round_rocks.height();
+    let result = round_rocks
+        .per_line()
+        .enumerate()
+        .map(|(i, line)| line.iter().filter(|x| **x).count() * (height - i))
+        .sum::<usize>();
 
-    fn compute_load(round_rocks: &Array2D<bool>) -> Int {
-        let height = round_rocks.height();
-        let result = round_rocks
-            .per_line()
-            .enumerate()
-            .map(|(i, line)| line.iter().filter(|x| **x).count() * (height - i))
-            .sum::<usize>();
-        Int::try_from(result).unwrap()
-    }
-
-    const CYCLE_COUNT: usize = 1_000_000_000;
-    for _ in 0..CYCLE_COUNT {
-        do_cycle(&square_rocks, &mut round_rocks);
-        if loop_detector.insert(round_rocks.clone()) {
-            let the_loop = loop_detector.into_loop().ok().unwrap();
-            let round_rocks = the_loop.get(CYCLE_COUNT);
-            return Some(compute_load(round_rocks));
-        }
-    }
-
-    Some(compute_load(&round_rocks))
+    Some(Int::try_from(result).unwrap())
 }
 
 /* -------------------------------------------------------------------------- */
