@@ -1,4 +1,4 @@
-use std::{collections::HashSet, hash::Hash, mem};
+use std::mem;
 
 /* -------------------------------------------------------------------------- */
 
@@ -27,18 +27,12 @@ pub struct LoopDetector<T>(Detection<T>);
 
 enum Detection<T> {
     Loop(Loop<T>),
-    NoLoop {
-        states: HashSet<State<T>>,
-        ordered: Vec<T>,
-    },
+    NoLoop { states: Vec<T> },
 }
 
 impl<T> Default for Detection<T> {
     fn default() -> Self {
-        Detection::NoLoop {
-            states: HashSet::new(),
-            ordered: Vec::new(),
-        }
+        Detection::NoLoop { states: Vec::new() }
     }
 }
 
@@ -50,46 +44,37 @@ impl<T> Default for LoopDetector<T> {
 
 impl<T> LoopDetector<T> {
     pub fn new() -> Self {
-        Self(Detection::NoLoop {
-            states: HashSet::new(),
-            ordered: Vec::new(),
-        })
+        Self(Detection::NoLoop { states: Vec::new() })
     }
 }
 
 impl<T> LoopDetector<T>
 where
-    T: Eq + Hash + Clone,
+    T: Eq,
 {
     pub fn insert(&mut self, state: T) -> bool {
         self.0 = match mem::take(&mut self.0) {
             // TODO: use Result
             Detection::Loop(_) => panic!("loop already found !"),
-            Detection::NoLoop {
-                mut states,
-                mut ordered,
-            } => {
-                let current = ordered.len();
+            Detection::NoLoop { mut states } => {
+                let loop_start = states
+                    .iter()
+                    .enumerate()
+                    .find_map(|(i, x)| (x == &state).then_some(i));
 
-                let inserted_state = states.get_or_insert(State {
-                    state: state.clone(),
-                    position: current,
-                });
-
-                if inserted_state.position == current {
-                    // The new state has been added
-                    ordered.push(state);
-
-                    Detection::NoLoop { states, ordered }
-                } else {
+                if let Some(loop_start) = loop_start {
                     // The state already exists
-                    let loop_start = inserted_state.position;
                     let the_loop = Loop {
-                        values: ordered.into_boxed_slice(),
+                        values: states.into_boxed_slice(),
                         loop_start,
                     };
 
                     Detection::Loop(the_loop)
+                } else {
+                    // The new state has been added
+                    states.push(state);
+
+                    Detection::NoLoop { states }
                 }
             }
         };
@@ -176,35 +161,6 @@ impl<T> Loop<T> {
 
 /* -------------------------------------------------------------------------- */
 
-struct State<T> {
-    state: T,
-    // This value must be ignored for equality check and hash
-    // so that this struct act like the value T
-    position: usize,
-}
-
-impl<T> PartialEq for State<T>
-where
-    T: PartialEq,
-{
-    fn eq(&self, other: &Self) -> bool {
-        self.state == other.state
-    }
-}
-
-impl<T> Eq for State<T> where T: Eq {}
-
-impl<T> Hash for State<T>
-where
-    T: Hash,
-{
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.state.hash(state);
-    }
-}
-
-/* -------------------------------------------------------------------------- */
-
 #[cfg(test)]
 mod tests {
     use super::LoopDetector;
@@ -225,3 +181,5 @@ mod tests {
         assert_eq!(the_loop.loop_start(), 2);
     }
 }
+
+/* -------------------------------------------------------------------------- */
