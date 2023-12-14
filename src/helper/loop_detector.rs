@@ -2,6 +2,27 @@ use std::{collections::HashSet, hash::Hash, mem};
 
 /* -------------------------------------------------------------------------- */
 
+/// # Usage
+/// ```
+/// # fn initial_state(): () {}
+/// # fn do_cycle(state: &mut ()) {}
+///
+/// const CYCLE_COUNT: usize = 1_000_000_000;
+///
+/// let mut cycle_detector = CycleDetector::new();
+///
+/// let mut state = initial_state();
+/// cycle_detector.insert(state.clone());
+///
+/// for _ in 0..CYCLE_COUNT {
+///     do_cycle(&mut state);
+///     if cycle_detector.insert(state.clone()) {
+///         let the_loop = cycle_detector.into_loop().ok().unwrap();
+///         *state = the_loop.get(CYCLE_COUNT).clone();
+///         break;
+///     }
+/// }
+/// ```
 pub struct LoopDetector<T>(Detection<T>);
 
 enum Detection<T> {
