@@ -141,25 +141,27 @@ pub fn part_two(input: &str) -> Option<Int> {
 
     loop_detector.insert(round_rocks.clone());
 
+    fn compute_load(round_rocks: &Array2D<bool>) -> Int {
+        let height = round_rocks.height();
+        let result = round_rocks
+            .per_line()
+            .enumerate()
+            .map(|(i, line)| line.iter().filter(|x| **x).count() * (height - i))
+            .sum::<usize>();
+        Int::try_from(result).unwrap()
+    }
+
     const CYCLE_COUNT: usize = 1_000_000_000;
     for _ in 0..CYCLE_COUNT {
         do_cycle(&square_rocks, &mut round_rocks);
         if loop_detector.insert(round_rocks.clone()) {
             let the_loop = loop_detector.into_loop().ok().unwrap();
-            round_rocks = the_loop.get(CYCLE_COUNT).clone();
-            break;
+            let round_rocks = the_loop.get(CYCLE_COUNT);
+            return Some(compute_load(round_rocks));
         }
     }
 
-    let height = round_rocks.height();
-
-    let result = round_rocks
-        .per_line()
-        .enumerate()
-        .map(|(i, line)| line.iter().filter(|x| **x).count() * (height - i))
-        .sum::<usize>();
-
-    Some(Int::try_from(result).unwrap())
+    Some(compute_load(&round_rocks))
 }
 
 /* -------------------------------------------------------------------------- */
