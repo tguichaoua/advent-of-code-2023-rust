@@ -143,6 +143,9 @@ where
 
 /// Computes the value of `init_state` after repeatedly applying `compute_next_state`
 /// for `cycle_count` times, using a cycle detection strategy.
+///
+/// `compute_next_state` must be pure, i.e. the returned value depends only of the input value,
+/// otherwise this function may returns false positive.
 pub fn compute_last_state<T>(
     cycle_count: usize,
     init_state: T,
