@@ -52,6 +52,21 @@ impl<T> Loop<T> {
         &self.values[self.loop_start..]
     }
 
+    /// An *infinite* iterator over the values of the loop.
+    ///
+    /// ```txt
+    ///   [0, 1, 2, 3, 4, 2, 3, 4, 2, 3, 4, ...]
+    ///
+    ///   [0] ──> [1] ──> [2] ──> [3] ──> [4]
+    ///                    ^               │
+    ///                    └───────────────┘
+    /// ```
+    #[inline]
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        let (head, the_loop) = self.values.split_at(self.loop_start);
+        head.iter().chain(the_loop.iter().cycle())
+    }
+
     /// Converts the index to match an element of this loop.
     ///
     /// ```txt
