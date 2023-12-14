@@ -32,14 +32,10 @@ impl<T> Cycle<T> {
         self.cycle_start
     }
 
-    /// Returns `true` if the length is `0`.
-    #[inline]
-    pub fn is_empty(&self) -> bool {
-        self.values.is_empty()
-    }
-
     /// Returns the number of elements.
     #[inline]
+    // NOTE: `Cycle` is never empty.
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> usize {
         self.values.len()
     }
