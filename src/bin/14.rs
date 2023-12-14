@@ -1,4 +1,4 @@
-use advent_of_code::helper::{array_2d::Array2D, loop_detector};
+use advent_of_code::helper::{array_2d::Array2D, cycle};
 
 advent_of_code::solution!(14);
 
@@ -137,12 +137,11 @@ pub fn part_two(input: &str) -> Option<Int> {
             .map(|line: &str| line.bytes().map(|b| b == b'O')),
     );
 
-    let round_rocks =
-        loop_detector::compute_last_state(1_000_000_000, round_rocks, |round_rocks| {
-            let mut round_rocks = round_rocks.clone();
-            do_cycle(&square_rocks, &mut round_rocks);
-            round_rocks
-        });
+    let round_rocks = cycle::compute_last_state(1_000_000_000, round_rocks, |round_rocks| {
+        let mut round_rocks = round_rocks.clone();
+        do_cycle(&square_rocks, &mut round_rocks);
+        round_rocks
+    });
 
     let height = round_rocks.height();
     let result = round_rocks
