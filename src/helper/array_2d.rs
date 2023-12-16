@@ -1,3 +1,5 @@
+use std::{error::Error, fmt::Display};
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Array2D<T> {
     values: Box<[T]>,
@@ -58,11 +60,12 @@ impl<T> Array2D<T> {
         self.values.len() / self.width
     }
 
-    pub fn get(&self, x: usize, y: usize) -> Option<&T> {
-        // TODO: use Result
-        assert!(x < self.width);
+    pub fn get(&self, x: usize, y: usize) -> Result<&T, OutOfBoundError> {
+        if x >= self.width {
+            return Err(OutOfBoundError::X);
+        }
         let i = self.width * y + x;
-        self.values.get(i)
+        self.values.get(i).ok_or(OutOfBoundError::Y)
     }
 
     pub fn get_mut(&mut self, x: usize, y: usize) -> Option<&mut T> {
@@ -91,6 +94,25 @@ impl<T> Array2D<T> {
 
 /* -------------------------------------------------------------------------- */
 
+#[derive(Debug)]
+pub enum OutOfBoundError {
+    X,
+    Y,
+}
+
+impl Display for OutOfBoundError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            OutOfBoundError::X => f.write_str("`x` index is out-of-bound"),
+            OutOfBoundError::Y => f.write_str("`y` index is out-of-bound"),
+        }
+    }
+}
+
+impl Error for OutOfBoundError {}
+
+/* -------------------------------------------------------------------------- */
+
 pub struct PerLine<'a, T> {
     array: &'a Array2D<T>,
     current: usize,
@@ -105,3 +127,5 @@ impl<'a, T> Iterator for PerLine<'a, T> {
         self.array.values.get(range)
     }
 }
+
+/* -------------------------------------------------------------------------- */
