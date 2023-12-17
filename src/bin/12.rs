@@ -170,8 +170,7 @@ pub fn part_one(input: &str) -> Option<usize> {
 pub fn part_two(input: &str) -> Option<usize> {
     let result = input
         .lines()
-        .enumerate()
-        .map(|(i, line)| {
+        .map(|line| {
             let (data, expected_groups) = line.split_once(' ').unwrap();
 
             if data.ends_with('#') {
