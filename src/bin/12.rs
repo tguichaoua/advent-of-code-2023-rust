@@ -197,11 +197,10 @@ pub fn part_two(input: &str) -> Option<usize> {
                 iter::repeat(v.into_iter()).take(5).flatten().collect_vec()
             };
 
-            let instructions = iter::repeat(data.bytes())
-                .take(5)
-                .intersperse("?".bytes())
-                .flatten()
-                .chain(iter::once(b'.'));
+            let instructions =
+                Itertools::intersperse(iter::repeat(data.bytes()).take(5), "?".bytes())
+                    .flatten()
+                    .chain(iter::once(b'.'));
 
             let fixed_dashes = instructions.clone().filter(|&b| b == b'#').count();
 
