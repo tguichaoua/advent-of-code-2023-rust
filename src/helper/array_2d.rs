@@ -68,11 +68,12 @@ impl<T> Array2D<T> {
         self.values.get(i).ok_or(OutOfBoundError::Y)
     }
 
-    pub fn get_mut(&mut self, x: usize, y: usize) -> Option<&mut T> {
-        // TODO: use Result
-        assert!(x < self.width);
+    pub fn get_mut(&mut self, x: usize, y: usize) -> Result<&mut T, OutOfBoundError> {
+        if x >= self.width {
+            return Err(OutOfBoundError::X);
+        }
         let i = self.width * y + x;
-        self.values.get_mut(i)
+        self.values.get_mut(i).ok_or(OutOfBoundError::Y)
     }
 
     pub fn set(&mut self, x: usize, y: usize, value: T) {
