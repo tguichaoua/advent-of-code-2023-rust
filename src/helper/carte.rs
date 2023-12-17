@@ -40,6 +40,26 @@ impl Pos {
             Direction::Left => self.left(),
         }
     }
+
+    pub fn move_to_clamped(
+        self,
+        direction: Direction,
+        width: usize,
+        height: usize,
+    ) -> Option<Self> {
+        match direction {
+            Direction::Up => self.up(),
+            Direction::Down => {
+                let down = self.down();
+                (down.y != height).then_some(down)
+            }
+            Direction::Right => {
+                let right = self.right();
+                (right.x != width).then_some(right)
+            }
+            Direction::Left => self.left(),
+        }
+    }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -60,6 +80,26 @@ impl Direction {
             Direction::Right => Direction::Left,
             Direction::Down => Direction::Up,
             Direction::Left => Direction::Right,
+        }
+    }
+
+    #[inline]
+    pub fn turn_right(self) -> Self {
+        match self {
+            Direction::Up => Direction::Right,
+            Direction::Right => Direction::Down,
+            Direction::Down => Direction::Left,
+            Direction::Left => Direction::Up,
+        }
+    }
+
+    #[inline]
+    pub fn turn_left(self) -> Self {
+        match self {
+            Direction::Up => Direction::Left,
+            Direction::Right => Direction::Up,
+            Direction::Down => Direction::Right,
+            Direction::Left => Direction::Down,
         }
     }
 }
