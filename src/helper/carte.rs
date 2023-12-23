@@ -60,6 +60,69 @@ impl Pos {
             Direction::Left => self.left(),
         }
     }
+
+    pub fn neighbors_clamped(self, width: usize, height: usize) -> [Option<Self>; 4] {
+        [
+            self.up(),
+            {
+                let down = self.down();
+                (down.y != height).then_some(down)
+            },
+            self.left(),
+            {
+                let right = self.right();
+                (right.x != width).then_some(right)
+            },
+        ]
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct IPos {
+    pub x: isize,
+    pub y: isize,
+}
+
+impl IPos {
+    pub fn wrapped(self, width: usize, height: usize) -> Pos {
+        let width = isize::try_from(width).unwrap();
+        let height = isize::try_from(height).unwrap();
+
+        let x = self.x % width;
+        let y = self.y % height;
+
+        let x = if x < 0 { x + width } else { x };
+        let y = if y < 0 { y + height } else { y };
+
+        Pos {
+            x: usize::try_from(x).unwrap(),
+            y: usize::try_from(y).unwrap(),
+        }
+    }
+
+    pub fn neighbors(self) -> [Self; 4] {
+        let Self { x, y } = self;
+        [
+            {
+                let y = y - 1;
+                Self { x, y }
+            },
+            {
+                let y = y + 1;
+                Self { x, y }
+            },
+            {
+                let x = x - 1;
+                Self { x, y }
+            },
+            {
+                let x = x + 1;
+                Self { x, y }
+            },
+        ]
+    }
 }
 
 /* -------------------------------------------------------------------------- */
