@@ -1,1 +1,1 @@
-python x.py
+python x.py $args[0]
